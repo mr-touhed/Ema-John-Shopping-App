@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { addToDb, getShoppingCart } from '../../utilities/fakedb';
+import Cart from '../Cart/Cart';
 import Product from '../Product/Product';
 import './Shop.css';
 
@@ -11,11 +13,39 @@ const Shop = () => {
             .then(res => res.json())
             .then(data => setProducts(data))
     }, []);
-
+    useEffect(()=>{
+        const savedCart = getShoppingCart()
+        const savedProducts = []
+        for(const id in savedCart){
+           const cartProduct =  products.find(product => product.id === id)
+           if(cartProduct){
+            cartProduct.quantity = savedCart[id]
+            savedProducts.push(cartProduct)
+            setCart(savedProducts)
+           }
+           
+        }
+        
+       
+    },[products])
     const handleAddToCart = (product) => {
         // cart.push(product); 
-        const newCart = [...cart, product];
+        // const newCart = [...cart, product];
+        let newCart = [];
+        // check if present product there for update quantity 
+        const exsist = cart.find(pd=> pd.id === product.id)
+        if(!exsist){
+            product.quantity = 1; // if card not exsist then quantity value add  1 
+            newCart = [...cart,product]
+            
+        }else{
+            exsist.quantity = exsist.quantity + 1; // if card exsist then update previous + 1
+            const remaining = cart.filter(pd=> pd.id !== product.id); // filter with out present product 
+            newCart =[...remaining,exsist] // updated new cart previous + present update product
+
+        }
         setCart(newCart);
+        addToDb(product.id)
     }
 
     return (
@@ -31,7 +61,7 @@ const Shop = () => {
             </div>
             <div className="cart-container">
                 <h4>Order Summary</h4>
-                <p>Selected Items: {cart.length}</p>
+                <Cart cart={cart}/>
             </div>
         </div>
     );
